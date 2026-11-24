@@ -60,7 +60,7 @@ export type Conversation =
   | { kind: 'greeting'; title: string; summary: string }
   | { kind: 'listening'; partial: string; hint: string }
   | { kind: 'processing'; text: string; hint: string }
-  | { kind: 'responding'; you: string; answer: string; chip?: string }
+  | { kind: 'responding'; you: string; answer: string; chip?: string; /** Cine a procesat cererea: „local” sau agentul (ex. „Haiku”). */ via?: string }
   | { kind: 'offline'; title: string; detail: string; retryLabel: string }
   /** Nimic sub orb (ex. cât e deschis ecranul de confirmare). */
   | { kind: 'none' };

@@ -107,7 +107,7 @@ function ConfirmDialog({ req, onConfirm, onCancel, onAdjust }: { req: ConfirmReq
   const ref = useRef<HTMLDivElement>(null);
   useEffect(() => {
     const prev = document.activeElement as HTMLElement | null;
-    ref.current?.focus();
+    ref.current?.focus({ preventScroll: true });
     return () => prev?.focus?.();
   }, []);
   return (
@@ -127,7 +127,9 @@ function ConfirmDialog({ req, onConfirm, onCancel, onAdjust }: { req: ConfirmReq
           else if (!e.shiftKey && document.activeElement === last) { e.preventDefault(); first.focus(); }
         }
       }}
-      className="absolute inset-0 flex items-center justify-center bg-[rgba(4,7,11,0.72)] outline-none"
+      className="absolute top-[-40px] bottom-[-40px] left-[-14%] right-[-14%] z-[2] flex items-center justify-center outline-none"
+      // Fundal radial care se estompează spre exterior (fără margini dure, fără backdrop-filter).
+      style={{ background: 'radial-gradient(ellipse 50% 50% at 50% 50%, rgba(4,7,11,0.82) 0%, rgba(4,7,11,0.6) 40%, rgba(4,7,11,0.25) 70%, rgba(4,7,11,0) 100%)' }}
     >
       <div className="w-full max-w-[440px] border border-solid border-warning bg-[#0d0f0c] px-[28px] py-[26px] flex flex-col gap-[14px] shadow-[0_0_40px_rgba(232,178,90,0.18)]">
         <div className="font-mono text-[11px] tracking-[0.2em] text-warning">{req.kicker}</div>
@@ -202,6 +204,7 @@ function ConversationView({ c, onRetry }: { c: Conversation; onRetry?: () => voi
           <div className="font-mono text-[12px] text-text-muted">TU: {c.you}</div>
           <div className="text-[26px] font-medium">{c.answer}</div>
           {c.chip && <div className="font-mono text-[11px] text-accent-on bg-accent px-[10px] py-[4px]">{c.chip}</div>}
+          {c.via && <div className="font-mono text-[11px] text-text-muted tracking-[0.08em]">via {c.via}</div>}
         </div>
       );
     case 'offline':

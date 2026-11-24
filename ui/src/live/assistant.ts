@@ -17,6 +17,10 @@ export interface Exchange {
   /** Entitățile atinse de comandă (din intent-end), pentru evidențiere și chip. */
   targets: { id: string; name: string }[];
   error?: boolean;
+  /** Din intent-end: true = comenzile locale din HA; false = agentul de conversație. Lipsă la HA vechi. */
+  processedLocally?: boolean;
+  /** Agentul de conversație al pipeline-ului (entity_id), pentru eticheta „via …”. */
+  agentId?: string;
   at: number;
 }
 
@@ -138,7 +142,15 @@ export class AssistantEngine {
             const targets = (resp.data?.success ?? []).filter((t: any) => t.type === 'entity').map((t: any) => ({ id: t.id, name: t.name }));
             this.set({
               phase: 'responding',
-              last: { you: this.state.heard, answer: resp.speech?.plain?.speech ?? '', targets, error: resp.response_type === 'error', at: Date.now() },
+              last: {
+                you: this.state.heard,
+                answer: resp.speech?.plain?.speech ?? '',
+                targets,
+                error: resp.response_type === 'error',
+                processedLocally: typeof d.processed_locally === 'boolean' ? d.processed_locally : undefined,
+                agentId: this.pipeline?.conversation_engine,
+                at: Date.now(),
+              },
             });
             break;
           }

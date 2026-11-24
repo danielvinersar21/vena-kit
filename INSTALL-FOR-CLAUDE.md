@@ -6,9 +6,16 @@ Pentru Claude-ul care lucrează cu Ionuț în „atelier”. Ionuț decide și a
 
 Vena e un add-on (app) de Home Assistant cu ingress: o interfață HUD peste HA. Se conectează prin proxy-ul intern al Supervisor-ului, deci **nu are nevoie de token și nu deschide porturi**. Folosește pipeline-ul Assist existent (Google STT → comenzi locale → Haiku → TTS românesc), fără să-l modifice.
 
+## Cum înțelege Vena comenzile
+
+- Vena **nu are logică proprie de înțelegere**. Trimite textul și vocea în pipeline-ul Assist implicit din HA, iar HA decide: întâi comenzile locale, apoi Claude Haiku pentru restul. Configurația existentă la Ionuț rămâne neschimbată.
+- Haiku poate controla doar entitățile expuse în **Settings → Voice assistants → Expose**. Ce nu e expus (termostatul, AC-ul, poarta) nu se poate comanda vocal, nici din Vena. E intenționat, nu e o eroare.
+- Dacă Ionuț vrea ca Vena să înțeleagă la voce o entitate nouă, o expune acolo, cu OK-ul lui.
+- Sub răspuns, Vena afișează discret „via local” sau „via Haiku”, ca să se vadă cine a procesat cererea. Informația vine de la HA (`processed_locally` din evenimentul `intent-end`).
+
 ## Pași
 
-1. **Adaugă repo-ul în HA.** Mergi la Settings → Apps (Add-ons) → Store → meniul ⋮ → Repositories și adaugă URL-ul repo-ului Vena: `<URL-REPO>`.
+1. **Adaugă repo-ul în HA.** Mergi la Settings → Apps (Add-ons) → Store → meniul ⋮ → Repositories și adaugă URL-ul repo-ului Vena: `https://github.com/danielvinersar21/vena-assistant`.
    Dacă repo-ul e privat: copiază folderul `vena/` în `/addons/vena` (din File editor sau Samba), apoi apasă Check for updates în Store. Apare la „Local add-ons”.
 2. **Instalează Vena**, apoi pornește-o și activează „Show in sidebar”. Lasă „Start on boot” pornit.
 3. **Opțiuni** (fila Configuration), cu OK de la Ionuț pentru fiecare:
