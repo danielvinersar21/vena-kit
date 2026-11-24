@@ -1,5 +1,5 @@
-import { useId } from 'react';
-import type { Conversation, OrbState } from '../model';
+import { useEffect, useId, useRef } from 'react';
+import type { ConfirmRequest, Conversation, OrbState } from '../model';
 import { Orb } from './Orb';
 
 export interface AssistantProps {
@@ -7,20 +7,34 @@ export interface AssistantProps {
   stateLabel: string;
   conversation: Conversation;
   micActive: boolean;
+  confirm?: ConfirmRequest;
+  onConfirm?: () => void;
+  onCancelConfirm?: () => void;
+  onRetry?: () => void;
   onSubmitText?: (text: string) => void;
   onMicDown?: () => void;
   onMicUp?: () => void;
 }
 
-export function Assistant({ orb, stateLabel, conversation, micActive, onSubmitText, onMicDown, onMicUp }: AssistantProps) {
+const LABEL_TONE: Record<OrbState, string> = {
+  idle: 'text-text-muted',
+  listening: 'text-accent',
+  processing: 'text-accent',
+  responding: 'text-accent',
+  confirm: 'text-warning',
+  offline: 'text-danger',
+};
+
+export function Assistant(props: AssistantProps) {
+  const { orb, stateLabel, conversation, micActive, confirm, onSubmitText, onMicDown, onMicUp } = props;
   const inputId = useId();
   return (
     <section aria-label="Asistent" className="flex flex-col items-center justify-center gap-[20px] relative">
-      <div className={'font-mono text-[12px] tracking-[0.2em] ' + (orb === 'idle' ? 'text-text-muted' : 'text-accent')} aria-live="polite">
+      <div className={'font-mono text-[12px] tracking-[0.2em] ' + LABEL_TONE[orb]} aria-live="polite">
         {stateLabel}
       </div>
       <Orb state={orb} />
-      <ConversationView c={conversation} />
+      <ConversationView c={conversation} onRetry={props.onRetry} />
       <form
         className="w-full max-w-[520px] flex gap-[10px] items-stretch"
         onSubmit={(e) => {
@@ -66,11 +80,69 @@ export function Assistant({ orb, stateLabel, conversation, micActive, onSubmitTe
           </svg>
         </button>
       </form>
+      {confirm && <ConfirmDialog req={confirm} onConfirm={props.onConfirm} onCancel={props.onCancelConfirm} />}
     </section>
   );
 }
 
-function ConversationView({ c }: { c: Conversation }) {
+// Ecranul de confirmare pentru aparatele protejate. Focusul trece pe dialog (fără inel vizibil),
+// Escape anulează; Tab rămâne în dialog cât timp e deschis.
+function ConfirmDialog({ req, onConfirm, onCancel }: { req: ConfirmRequest; onConfirm?: () => void; onCancel?: () => void }) {
+  const titleId = useId();
+  const ref = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    const prev = document.activeElement as HTMLElement | null;
+    ref.current?.focus();
+    return () => prev?.focus?.();
+  }, []);
+  return (
+    <div
+      ref={ref}
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby={titleId}
+      tabIndex={-1}
+      onKeyDown={(e) => {
+        if (e.key === 'Escape') onCancel?.();
+        if (e.key === 'Tab') {
+          const btns = ref.current?.querySelectorAll('button');
+          if (!btns?.length) return;
+          const first = btns[0], last = btns[btns.length - 1];
+          if (e.shiftKey && (document.activeElement === first || document.activeElement === ref.current)) { e.preventDefault(); last.focus(); }
+          else if (!e.shiftKey && document.activeElement === last) { e.preventDefault(); first.focus(); }
+        }
+      }}
+      className="absolute inset-0 flex items-center justify-center bg-[rgba(4,7,11,0.72)] outline-none"
+    >
+      <div className="w-full max-w-[440px] border border-solid border-warning bg-[#0d0f0c] px-[28px] py-[26px] flex flex-col gap-[14px] shadow-[0_0_40px_rgba(232,178,90,0.18)]">
+        <div className="font-mono text-[11px] tracking-[0.2em] text-warning">{req.kicker}</div>
+        <h2 id={titleId} className="m-0 text-[24px] font-semibold">
+          {req.title}
+        </h2>
+        <p className="m-0 text-[15px] text-text leading-[1.5]">{req.body}</p>
+        <p className="m-0 font-mono text-[12px] text-warning-muted leading-[1.5]">{req.note}</p>
+        <div className="flex gap-[10px] mt-[4px]">
+          <button
+            type="button"
+            onClick={onConfirm}
+            className="flex-1 min-h-[44px] border-0 bg-warning text-warning-on font-display text-[15px] font-semibold cursor-pointer"
+          >
+            {req.confirmLabel}
+          </button>
+          <button
+            type="button"
+            onClick={onCancel}
+            className="flex-1 min-h-[44px] border border-solid border-offline bg-transparent text-text font-display text-[15px] cursor-pointer"
+          >
+            {req.cancelLabel}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function ConversationView({ c, onRetry }: { c: Conversation; onRetry?: () => void }) {
   switch (c.kind) {
     case 'greeting':
       return (
@@ -104,5 +176,21 @@ function ConversationView({ c }: { c: Conversation }) {
           {c.chip && <div className="font-mono text-[11px] text-accent-on bg-accent px-[10px] py-[4px]">{c.chip}</div>}
         </div>
       );
+    case 'offline':
+      return (
+        <div className="text-center flex flex-col items-center gap-[10px] min-h-[72px]">
+          <div className="text-[24px] font-medium">{c.title}</div>
+          <div className="text-[14px] text-text-secondary">{c.detail}</div>
+          <button
+            type="button"
+            onClick={onRetry}
+            className="font-mono text-[12px] bg-transparent text-danger border border-solid border-danger px-[16px] py-0 min-h-[40px] cursor-pointer"
+          >
+            {c.retryLabel}
+          </button>
+        </div>
+      );
+    case 'none':
+      return null;
   }
 }

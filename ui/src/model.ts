@@ -28,6 +28,8 @@ export interface StatusItem {
   value?: string;
   /** Fără valoare: textul e afișat întreg cu culoarea text (ex. ceasul). */
   plain?: boolean;
+  /** Valoare în culoarea de eroare (ex. HA DECONECTAT). */
+  danger?: boolean;
 }
 
 export interface Camera {
@@ -37,6 +39,8 @@ export interface Camera {
   detection?: { label: string; left: string; top: string; width: string; height: string };
   /** URL MJPEG relativ (./camera/<entity_id>); lipsă în mock. */
   streamUrl?: string;
+  /** Fără semnal (offline): fără scan, detecție și REC; afișează „SEMNAL PIERDUT”. */
+  signalLost?: boolean;
 }
 
 export interface Tile {
@@ -48,22 +52,39 @@ export interface JournalEntry {
   id: string;
   time: string;
   text: string;
-  highlight?: boolean;
+  /** Ora colorată: accent (eveniment recent) sau danger (eroare). */
+  tone?: 'accent' | 'danger';
 }
 
 export type Conversation =
   | { kind: 'greeting'; title: string; summary: string }
   | { kind: 'listening'; partial: string; hint: string }
   | { kind: 'processing'; text: string; hint: string }
-  | { kind: 'responding'; you: string; answer: string; chip?: string };
+  | { kind: 'responding'; you: string; answer: string; chip?: string }
+  | { kind: 'offline'; title: string; detail: string; retryLabel: string }
+  /** Nimic sub orb (ex. cât e deschis ecranul de confirmare). */
+  | { kind: 'none' };
+
+/** Ecranul de confirmare pentru aparatele protejate (05-confirmare). */
+export interface ConfirmRequest {
+  kicker: string;
+  title: string;
+  body: string;
+  note: string;
+  confirmLabel: string;
+  cancelLabel: string;
+}
 
 export interface ScreenModel {
   location: string;
+  /** offline: logo roșu, camerele estompate, camera fără semnal. */
+  connection: 'online' | 'offline';
   status: StatusItem[];
   orb: OrbState;
   stateLabel: string;
   conversation: Conversation;
   micActive: boolean;
+  confirm?: ConfirmRequest;
   rooms: Room[];
   camera: Camera;
   tiles: Tile[];

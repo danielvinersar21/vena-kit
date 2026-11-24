@@ -17,7 +17,7 @@ export function Yard({ camera, tiles, journal }: { camera: Camera; tiles: Tile[]
       <ol className="list-none m-0 p-0 flex flex-col gap-[10px] text-[14px]">
         {journal.map((j) => (
           <li key={j.id} className="flex gap-[12px]">
-            <span className={'font-mono text-[12px] min-w-[44px] ' + (j.highlight ? 'text-accent' : 'text-text-muted')}>{j.time}</span>
+            <span className={'font-mono text-[12px] min-w-[44px] ' + (j.tone === 'accent' ? 'text-accent' : j.tone === 'danger' ? 'text-danger' : 'text-text-muted')}>{j.time}</span>
             <span>{j.text}</span>
           </li>
         ))}
@@ -37,8 +37,8 @@ function CameraView({ camera }: { camera: Camera }) {
         className="absolute inset-0"
         style={{ background: 'repeating-linear-gradient(0deg, rgba(79,216,255,0.04) 0 1px, transparent 1px 4px)' }}
       />
-      <div className="a-scan absolute left-0 right-0 top-0 h-[1px] bg-accent opacity-40" />
-      {d && (
+      {!camera.signalLost && <div className="a-scan absolute left-0 right-0 top-0 h-[1px] bg-accent opacity-40" />}
+      {d && !camera.signalLost && (
         <>
           <div className="absolute border-[1.5px] border-solid border-accent" style={{ left: d.left, top: d.top, width: d.width, height: d.height }} />
           <div
@@ -49,7 +49,10 @@ function CameraView({ camera }: { camera: Camera }) {
           </div>
         </>
       )}
-      {camera.rec && <div className="absolute right-[10px] top-[8px] font-mono text-[11px] text-rec">● REC</div>}
+      {camera.signalLost && (
+        <div className="absolute inset-0 flex items-center justify-center font-mono text-[12px] text-danger tracking-[0.16em]">SEMNAL PIERDUT</div>
+      )}
+      {camera.rec && !camera.signalLost && <div className="absolute right-[10px] top-[8px] font-mono text-[11px] text-rec">● REC</div>}
       <div className="absolute left-[10px] bottom-[8px] font-mono text-[11px] text-text-secondary">
         {camera.name} · {camera.time}
       </div>

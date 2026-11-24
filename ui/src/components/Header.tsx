@@ -1,12 +1,13 @@
 import type { StatusItem } from '../model';
 
-export function Header({ location, status }: { location: string; status: StatusItem[] }) {
+export function Header({ location, status, offline }: { location: string; status: StatusItem[]; offline?: boolean }) {
+  const mark = offline ? '#ff8a8a' : '#4fd8ff';
   return (
     <header className="flex items-center justify-between gap-[16px] flex-wrap [border-bottom:1px_solid_#12303d] pb-[14px]">
       <div className="flex items-center gap-[14px]">
         <svg width="28" height="28" viewBox="0 0 28 28" aria-hidden="true">
-          <circle cx="14" cy="14" r="12" fill="none" stroke="#4fd8ff" strokeWidth="1.5" />
-          <circle cx="14" cy="14" r="5" fill="#4fd8ff" />
+          <circle cx="14" cy="14" r="12" fill="none" stroke={mark} strokeWidth="1.5" />
+          <circle cx="14" cy="14" r="5" fill={mark} />
         </svg>
         <div className="text-[20px] font-semibold tracking-[0.32em]">VENA</div>
         <div className="font-mono text-[12px] text-text-muted tracking-[0.08em]">// {location}</div>
@@ -19,7 +20,7 @@ export function Header({ location, status }: { location: string; status: StatusI
             </span>
           ) : (
             <span key={s.label}>
-              {s.label} <span className="text-accent">{s.value}</span>
+              {s.label} <span className={s.danger ? 'text-danger' : 'text-accent'}>{s.value}</span>
             </span>
           ),
         )}

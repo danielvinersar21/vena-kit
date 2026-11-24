@@ -6,7 +6,7 @@ import { Header } from './Header';
 import { Rooms, type RoomActions } from './Rooms';
 import { Yard } from './Yard';
 
-export type ScreenActions = RoomActions & Pick<AssistantProps, 'onSubmitText' | 'onMicDown' | 'onMicUp'>;
+export type ScreenActions = RoomActions & Pick<AssistantProps, 'onSubmitText' | 'onMicDown' | 'onMicUp' | 'onConfirm' | 'onCancelConfirm' | 'onRetry'>;
 
 // Ecranul principal: 3 coloane (camere / orb / curte + jurnal), ca în design/static.
 // Designul e făcut pe 1440×900. Pe ecrane mai mari, tot UI-ul se mărește proporțional (zoom),
@@ -34,14 +34,18 @@ export function Screen({ model, actions = {} }: { model: ScreenModel; actions?: 
     <div className="relative w-full box-border bg-bg overflow-hidden" style={{ zoom: scale, minHeight }}>
       <Background {...model.background} />
       <div style={{ minHeight }} className="relative z-[1] box-border text-text font-display px-[32px] py-[24px] flex flex-col gap-[20px]">
-        <Header location={model.location} status={model.status} />
+        <Header location={model.location} status={model.status} offline={model.connection === 'offline'} />
         <main className="grid grid-cols-[minmax(260px,1fr)_minmax(380px,1.4fr)_minmax(300px,1.1fr)] max-[1100px]:grid-cols-1 gap-[24px] flex-1">
-          <Rooms rooms={model.rooms} onToggle={actions.onToggle} onSetpoint={actions.onSetpoint} />
+          <Rooms rooms={model.rooms} dimmed={model.connection === 'offline'} onToggle={actions.onToggle} onSetpoint={actions.onSetpoint} />
           <Assistant
             orb={model.orb}
             stateLabel={model.stateLabel}
             conversation={model.conversation}
             micActive={model.micActive}
+            confirm={model.confirm}
+            onConfirm={actions.onConfirm}
+            onCancelConfirm={actions.onCancelConfirm}
+            onRetry={actions.onRetry}
             onSubmitText={actions.onSubmitText}
             onMicDown={actions.onMicDown}
             onMicUp={actions.onMicUp}

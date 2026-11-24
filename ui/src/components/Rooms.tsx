@@ -5,9 +5,10 @@ export interface RoomActions {
   onSetpoint?: (room: Room, row: Extract<RoomRow, { kind: 'setpoint' }>) => void;
 }
 
-export function Rooms({ rooms, ...actions }: { rooms: Room[] } & RoomActions) {
+export function Rooms({ rooms, dimmed, ...actions }: { rooms: Room[]; dimmed?: boolean } & RoomActions) {
   return (
-    <section aria-label="Camere" className="flex flex-col gap-[12px]">
+    // Offline: ultima stare cunoscută, estompată (06-offline).
+    <section aria-label="Camere" className={'flex flex-col gap-[12px]' + (dimmed ? ' opacity-45 [filter:grayscale(0.6)]' : '')}>
       <h2 className="m-0 text-[12px] font-medium tracking-[0.24em] text-text-muted">CAMERE · PREZENȚĂ</h2>
       {rooms.map((room) => (
         <RoomCard key={room.id} room={room} {...actions} />
