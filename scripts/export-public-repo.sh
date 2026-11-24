@@ -2,8 +2,10 @@
 # Generează conținutul repo-ului public (doar configurarea app-ului, fără sursă).
 # Folosire: scripts/export-public-repo.sh <director-țintă>   (ex.: clona lui vena-assistant)
 set -e
-cd "$(dirname "$0")/.."
 DEST="${1:?director țintă lipsă}"
+mkdir -p "$DEST" && DEST="$(cd "$DEST" && pwd)"
+cd "$(dirname "$0")/.."
+[ "$DEST" != "$(pwd)" ] || { echo "Ținta nu poate fi chiar repo-ul sursă."; exit 1; }
 mkdir -p "$DEST/vena"
 cp public-repo/repository.yaml public-repo/README.md INSTALL-FOR-CLAUDE.md "$DEST/"
 rm -rf "$DEST/.github" && cp -R public-repo/.github "$DEST/.github"
