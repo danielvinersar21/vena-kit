@@ -1,0 +1,61 @@
+<!doctype html>
+<html lang="ro">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Vena spike</title>
+  <style>
+    :root { color-scheme: dark; }
+    body { background: #04070b; color: #cdeefc; font: 14px/1.5 ui-monospace, Menlo, monospace; margin: 0; padding: 24px; }
+    h1 { font-size: 18px; margin: 0 0 16px; }
+    h2 { font-size: 13px; color: #7ea9bb; text-transform: uppercase; letter-spacing: .1em; margin: 24px 0 8px; }
+    section { border: 1px solid #12303d; padding: 12px 16px; margin-bottom: 12px; max-width: 900px; }
+    button, input, select { font: inherit; color: inherit; background: #071119; border: 1px solid #1f4a5c; padding: 6px 12px; }
+    button[aria-pressed="true"] { background: #4fd8ff; color: #04070b; }
+    button:focus-visible, input:focus-visible { outline: 2px solid #4fd8ff; outline-offset: 2px; }
+    #status.ok { color: #4fd8ff; } #status.err { color: #ff8a8a; }
+    .row { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; margin: 4px 0; }
+    #chat-text { flex: 1; min-width: 240px; }
+    #log { max-height: 320px; overflow: auto; white-space: pre-wrap; font-size: 12px; color: #9cc3d3; background: #071119; padding: 8px; }
+    #mic.rec { background: #ff6b6b; color: #04070b; }
+    .muted { color: #7ea9bb; } .warn { color: #e8b25a; }
+  </style>
+</head>
+<body>
+  <h1>Vena spike: <span id="status">se conectează…</span></h1>
+
+  <section>
+    <h2>Lumini (demo)</h2>
+    <div id="lights" class="muted">aștept stările…</div>
+  </section>
+
+  <section>
+    <h2>Assist</h2>
+    <div class="row">
+      <label for="pipeline">Pipeline</label>
+      <select id="pipeline"></select>
+      <span id="pipeline-info" class="muted"></span>
+    </div>
+    <form id="chat" class="row">
+      <input id="chat-text" placeholder="ex.: aprinde lumina din bucătărie" autocomplete="off" aria-label="Mesaj text">
+      <button type="submit">Trimite</button>
+    </form>
+    <div class="row">
+      <button id="mic" type="button" aria-label="Ține apăsat ca să vorbești">🎙 ține apăsat (sau Space)</button>
+      <span id="voice-state" class="muted">pregătit</span>
+      <button id="wav" type="button" disabled>descarcă WAV-ul trimis</button>
+    </div>
+    <div id="mic-msg" class="warn"></div>
+    <p><span class="muted">Transcriere:</span> <span id="stt-text">—</span></p>
+    <p><span class="muted">Răspuns:</span> <span id="reply">—</span></p>
+    <audio id="player" controls></audio>
+  </section>
+
+  <section>
+    <h2>Evenimente</h2>
+    <div id="log"></div>
+  </section>
+
+  <script type="module" src="./app.js"></script>
+</body>
+</html>
