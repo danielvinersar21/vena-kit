@@ -35,10 +35,11 @@ Vena e o interfață web HUD pentru casa și atelierul lui Ionuț, livrată ca *
 
 - `docker compose -f dev/ha/docker-compose.yml up -d`: HA local (demo) pe 127.0.0.1:8123 + Whisper (ro).
 - `.env` (din `.env.example`): `HA_URL`, `HA_TOKEN` (long-lived token din HA-ul local).
-- `npm run dev`: serverul Vena (proxy către HA, :8099) + Vite (UI, http://127.0.0.1:5173). Previzualizare: `/preview?state=pregatit|asculta|proceseaza|raspunde|confirmare|offline`.
+- `npm run dev`: serverul Vena (proxy către HA, :8099) + Vite (UI, http://127.0.0.1:5173). La `/` e ecranul live (HA-ul local); previzualizarea cu date mock: `/preview?state=pregatit|asculta|proceseaza|raspunde|confirmare|offline`.
+- `npm start` servește build-ul din `ui/dist` (rulează întâi `npm run build`); `VENA_UI_DIR=spike-ui npm start` readuce pagina de test din spike.
 - `npm run visual -- <stare>`: capturi 1440×900 ale referinței și ale `/preview`, plus diff și side-by-side, în `visual/` (necesită Vite pornit și Google Chrome).
 - `npm run typecheck`, `npm run build` (UI în `ui/dist`, cu URL-uri relative).
 - `node scripts/render-brand.mjs`: regenerează `vena/icon.png` și `vena/logo.png`.
 - `node dev/scripts/setup-ha.mjs`: configurează HA-ul local (Wyoming, pipeline „Vena RO”, zona Bucătărie).
 - `node dev/scripts/test-proxy.mjs <frază.wav>`: test cap-coadă prin proxy (lumină, chat, voce).
-- `./scripts/sync-addon.sh`, apoi `docker buildx build --platform linux/amd64 vena/`: verifică imaginea local.
+- `./scripts/sync-addon.sh` (face și `npm run build`), apoi `docker buildx build --platform linux/amd64 vena/`: verifică imaginea local.

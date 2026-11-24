@@ -73,6 +73,8 @@ export interface ConfirmRequest {
   note: string;
   confirmLabel: string;
   cancelLabel: string;
+  /** Valoare reglabilă (termostat): afișează −/+ în dialog. */
+  adjust?: string;
 }
 
 export interface ScreenModel {
@@ -84,9 +86,13 @@ export interface ScreenModel {
   stateLabel: string;
   conversation: Conversation;
   micActive: boolean;
+  /** Microfonul e deschis (stream activ): indicator vizibil în header. */
+  micOpen?: boolean;
+  /** Motivul pentru care microfonul nu merge (chatul text rămâne). */
+  micMessage?: { text: string; fullscreen: boolean };
   confirm?: ConfirmRequest;
   rooms: Room[];
-  camera: Camera;
+  camera: Camera | null;
   tiles: Tile[];
   journal: JournalEntry[];
   background: { pattern: 'hex' | 'grid' | 'dots' | 'none'; strength: number };

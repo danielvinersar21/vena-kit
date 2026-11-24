@@ -13,7 +13,7 @@ WORKDIR /app
 COPY --from=deps /app/node_modules ./node_modules
 COPY app/package.json ./
 COPY app/server ./server
-COPY app/spike-ui ./spike-ui
+COPY app/ui/dist ./ui/dist
 ENV NODE_ENV=production
 LABEL io.hass.type="app" io.hass.name="Vena"
 # S6 resetează mediul pentru CMD; with-contenv readuce SUPERVISOR_TOKEN.

@@ -1,4 +1,4 @@
-// Vena: server spike. Servește UI-ul static, face proxy WebSocket către HA
+// Vena: server. Servește UI-ul static (build-ul Vite din ui/dist), face proxy WebSocket către HA
 // (inclusiv frame-uri binare), proxy pentru camere și TTS și expune /config.
 // Fără dependențe în afară de `ws`. Compatibil Node >= 20.
 import http from 'node:http';
@@ -9,7 +9,8 @@ import { fileURLToPath } from 'node:url';
 import { WebSocket, WebSocketServer } from 'ws';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
-const UI_DIR = process.env.VENA_UI_DIR || path.join(ROOT, 'spike-ui');
+// Pagina de test din spike rămâne disponibilă cu VENA_UI_DIR=spike-ui.
+const UI_DIR = path.resolve(ROOT, process.env.VENA_UI_DIR || 'ui/dist');
 const INGRESS_GATEWAY = '172.30.32.2';
 
 // ---------- configurare ----------
@@ -111,6 +112,7 @@ const MIME = {
   '.svg': 'image/svg+xml',
   '.png': 'image/png',
   '.woff2': 'font/woff2',
+  '.woff': 'font/woff',
 };
 function serveStatic(req, res, pathname) {
   const rel = pathname === '/' ? '/index.html' : pathname;
@@ -121,7 +123,9 @@ function serveStatic(req, res, pathname) {
     res.writeHead(200, {
       'content-type': MIME[path.extname(file)] || 'application/octet-stream',
       'content-length': st.size,
-      'cache-control': 'no-cache',
+      // Fișierele din assets/ au hash în nume: se pot păstra în cache; restul se revalidează.
+      'cache-control': rel.startsWith('/assets/') ? 'public, max-age=31536000, immutable' : 'no-cache',
+      'x-content-type-options': 'nosniff',
     });
     fs.createReadStream(file).pipe(res);
   });

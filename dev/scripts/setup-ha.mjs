@@ -19,6 +19,15 @@ ws.on('message', async (d) => {
     const ent = await call('config/entity_registry/get', { entity_id: 'light.kitchen_lights' });
     await call('config/device_registry/update', { device_id: ent.device_id, area_id: area.area_id });
     console.log('kitchen device -> area', area.area_id);
+    // Zona „Climă” cu un termostat (pentru ecranul de confirmare al aparatelor protejate).
+    let clima = areas.find(a => a.name === 'Climă');
+    if (!clima) clima = await call('config/area_registry/create', { name: 'Climă' });
+    const thermo = await call('config/entity_registry/get', { entity_id: 'climate.hvac' }).catch(() => null);
+    if (thermo) {
+      if (thermo.device_id) await call('config/device_registry/update', { device_id: thermo.device_id, area_id: clima.area_id });
+      else await call('config/entity_registry/update', { entity_id: 'climate.hvac', area_id: clima.area_id });
+      console.log('climate.hvac -> Climă');
+    }
     const stt = states.find(s => s.entity_id.startsWith('stt.') && /whisper/.test(s.entity_id))?.entity_id;
     const ttsList = await call('tts/engine/list', { language: 'ro' });
     console.log('tts ro:', JSON.stringify(ttsList.providers.map(p => [p.engine_id, p.supported_languages?.length])));

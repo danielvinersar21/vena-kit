@@ -142,3 +142,17 @@ Home Assistant Core
 ## Layout pe ecrane mari (decis)
 
 Designul e pe 1440×900. Ecranul umple mereu toată înălțimea ferestrei, iar pe ecrane mai mari tot UI-ul se mărește proporțional (`zoom` = min(lățime/1440, înălțime/900), minim 1), în `ui/src/components/Screen.tsx`. La 1440×900 rezultatul e identic cu referința.
+
+## Ecranul live (implementat, noiembrie 2026)
+
+Codul e în `ui/src/live/`: `connection.ts` (WS prin proxy, reconectare cu backoff 1–30 s), `home.ts` (funcții pure: HA → view-model), `assistant.ts` (text și voce, politica microfonului din spike), `useLive.ts` (le leagă).
+
+- **Camere = zone (areas).** Pe rând: luminile neprotejate grupate („Lumini (n)”), luminile protejate separat (cu avertizare), `switch`/`fan`/`input_boolean` ca toggle, `climate` cu temperatură țintă ca buton de setpoint (cere confirmare, cu −/+ în dialog), `cover`/`lock` doar afișate. Zonele fără nimic de afișat nu apar. Entitățile ascunse, dezactivate sau de configurare/diagnostic nu apar.
+- **Prezența:** `binary_sensor` cu `device_class` occupancy/presence/motion; fără senzori, zona cu aparate protejate primește eticheta PROTEJAT.
+- **Protejate:** domeniile `climate`, `lock`, `cover` + `protected_entities`; orice comandă (în ambele sensuri) trece prin ecranul de confirmare.
+- **Read-only:** `read_only_entities` + orice `cover` cu `device_class` gate/garage (poarta), automat. Nu au butoane, iar `callService` refuză oricum orice apel pe ele.
+- **Tile-uri:** entitățile read-only, apoi media player-ul care redă (sau primul). **Camera:** prima entitate `camera` (preferă numele cu curte/yard/gate/poartă), MJPEG prin `./camera/<id>`.
+- **Jurnal:** `logbook/event_stream` pe ultimele 12 h, fără senzori/timestamp-uri; numele vin din stări (stream-ul nu le trimite). Accent: entitățile read-only și ultimele 15 minute.
+- **Bara de stare:** HA, FRIGATE (doar dacă există entități de la platforma `frigate`), BACKUP (din `sensor.backup_last_successful_automatic_backup`, OK sub 48 h), ceasul. Locația din header e `location_name` din HA.
+- **Asistentul:** pipeline-ul preferat; după comandă, zona atinsă e evidențiată și apare chip-ul cu entitățile, 20 s. Indicatorul „● MICROFON DESCHIS” apare în bara de stare cât stream-ul e deschis.
+- **Offline:** ultima stare cunoscută, controalele dezactivate (`inert`), numărătoare până la reîncercare, „Reîncearcă acum”, intrare în jurnal.

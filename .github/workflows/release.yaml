@@ -101,7 +101,9 @@ jobs:
 
       # Supervisor-ul construiește doar din folderul app-ului, deci sursa se copiază în contextul de build.
       - name: Sync app source into build context
-        run: ./scripts/sync-addon.sh
+        run: |
+          npm ci --no-audit --no-fund
+          ./scripts/sync-addon.sh
 
       - name: Build image
         uses: home-assistant/builder/actions/build-image@2026.09.0

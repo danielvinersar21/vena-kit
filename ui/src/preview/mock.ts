@@ -136,7 +136,7 @@ export function mockScreen(state: PreviewState): ScreenModel {
           detail: 'Arăt ultima stare cunoscută (17:31). Reîncerc automat în 8 s.',
           retryLabel: 'REÎNCEARCĂ ACUM',
         },
-        camera: { ...base.camera, signalLost: true },
+        camera: { ...base.camera!, signalLost: true },
         journal: [{ id: 'j0', time: '17:31', text: 'Conexiunea cu Home Assistant s-a pierdut', tone: 'danger' }, ...base.journal],
       };
   }

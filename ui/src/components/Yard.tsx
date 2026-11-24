@@ -1,19 +1,26 @@
 import type { Camera, JournalEntry, Tile } from '../model';
 
-export function Yard({ camera, tiles, journal }: { camera: Camera; tiles: Tile[]; journal: JournalEntry[] }) {
+export function Yard({ camera, tiles, journal }: { camera: Camera | null; tiles: Tile[]; journal: JournalEntry[] }) {
   return (
     <section aria-label="Curte și evenimente" className="flex flex-col gap-[16px]">
       <h2 className="m-0 text-[12px] font-medium tracking-[0.24em] text-text-muted">CAMERA CURȚII · LIVE</h2>
-      <CameraView camera={camera} />
-      <div className="grid grid-cols-[repeat(2,minmax(0,1fr))] gap-[10px]">
+      {camera ? (
+        <CameraView camera={camera} />
+      ) : (
+        <div className="relative aspect-[16/10] bg-camera-bg border border-solid border-border-strong flex items-center justify-center font-mono text-[12px] text-text-muted tracking-[0.16em]">
+          NICIO CAMERĂ
+        </div>
+      )}
+      {tiles.length > 0 && <div className="grid grid-cols-[repeat(2,minmax(0,1fr))] gap-[10px]">
         {tiles.map((t) => (
           <div key={t.label} className="border border-solid border-border bg-surface p-[12px]">
             <div className="font-mono text-[11px] text-text-muted">{t.label}</div>
-            <div className="text-[18px] font-semibold mt-[4px]">{t.value}</div>
+            <div className="text-[18px] font-semibold mt-[4px] overflow-hidden text-ellipsis whitespace-nowrap" title={t.value}>{t.value}</div>
           </div>
         ))}
-      </div>
+      </div>}
       <h2 className="mt-[4px] mx-0 mb-0 text-[12px] font-medium tracking-[0.24em] text-text-muted">JURNAL</h2>
+      {journal.length === 0 && <div className="font-mono text-[12px] text-text-muted">Niciun eveniment recent.</div>}
       <ol className="list-none m-0 p-0 flex flex-col gap-[10px] text-[14px]">
         {journal.map((j) => (
           <li key={j.id} className="flex gap-[12px]">

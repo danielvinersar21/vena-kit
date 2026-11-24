@@ -1,6 +1,6 @@
 import type { StatusItem } from '../model';
 
-export function Header({ location, status, offline }: { location: string; status: StatusItem[]; offline?: boolean }) {
+export function Header({ location, status, offline, micOpen }: { location: string; status: StatusItem[]; offline?: boolean; micOpen?: boolean }) {
   const mark = offline ? '#ff8a8a' : '#4fd8ff';
   return (
     <header className="flex items-center justify-between gap-[16px] flex-wrap [border-bottom:1px_solid_#12303d] pb-[14px]">
@@ -13,6 +13,10 @@ export function Header({ location, status, offline }: { location: string; status
         <div className="font-mono text-[12px] text-text-muted tracking-[0.08em]">// {location}</div>
       </div>
       <div className="flex gap-[24px] font-mono text-[12px] text-text-muted flex-wrap">
+        {/* Politica microfonului: indicator vizibil cât timp stream-ul e deschis. */}
+        <span role="status" className={micOpen ? 'text-rec' : 'hidden'}>
+          {micOpen ? '● MICROFON DESCHIS' : ''}
+        </span>
         {status.map((s) =>
           s.plain ? (
             <span key={s.label} className="text-text">

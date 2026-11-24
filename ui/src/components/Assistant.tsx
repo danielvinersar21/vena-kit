@@ -8,6 +8,8 @@ export interface AssistantProps {
   conversation: Conversation;
   micActive: boolean;
   confirm?: ConfirmRequest;
+  micMessage?: { text: string; fullscreen: boolean };
+  onAdjust?: (delta: number) => void;
   onConfirm?: () => void;
   onCancelConfirm?: () => void;
   onRetry?: () => void;
@@ -80,14 +82,27 @@ export function Assistant(props: AssistantProps) {
           </svg>
         </button>
       </form>
-      {confirm && <ConfirmDialog req={confirm} onConfirm={props.onConfirm} onCancel={props.onCancelConfirm} />}
+      {props.micMessage && (
+        <div role="alert" className="w-full max-w-[520px] font-mono text-[12px] text-warning leading-[1.5] -mt-[8px]">
+          {props.micMessage.text}
+          {props.micMessage.fullscreen && (
+            <>
+              {' '}
+              <a href={location.href} target="_blank" rel="noopener" className="text-accent">
+                Deschide Vena pe tot ecranul
+              </a>
+            </>
+          )}
+        </div>
+      )}
+      {confirm && <ConfirmDialog req={confirm} onConfirm={props.onConfirm} onCancel={props.onCancelConfirm} onAdjust={props.onAdjust} />}
     </section>
   );
 }
 
 // Ecranul de confirmare pentru aparatele protejate. Focusul trece pe dialog (fără inel vizibil),
 // Escape anulează; Tab rămâne în dialog cât timp e deschis.
-function ConfirmDialog({ req, onConfirm, onCancel }: { req: ConfirmRequest; onConfirm?: () => void; onCancel?: () => void }) {
+function ConfirmDialog({ req, onConfirm, onCancel, onAdjust }: { req: ConfirmRequest; onConfirm?: () => void; onCancel?: () => void; onAdjust?: (d: number) => void }) {
   const titleId = useId();
   const ref = useRef<HTMLDivElement>(null);
   useEffect(() => {
@@ -120,6 +135,19 @@ function ConfirmDialog({ req, onConfirm, onCancel }: { req: ConfirmRequest; onCo
           {req.title}
         </h2>
         <p className="m-0 text-[15px] text-text leading-[1.5]">{req.body}</p>
+        {req.adjust !== undefined && (
+          <div className="flex items-center gap-[10px]">
+            <button type="button" aria-label="Scade" onClick={() => onAdjust?.(-0.5)} className="w-[44px] min-h-[40px] border border-solid border-[#5a4520] bg-transparent text-warning font-mono text-[16px] cursor-pointer">
+              −
+            </button>
+            <span className="font-mono text-[16px] text-warning min-w-[72px] text-center" aria-live="polite">
+              {req.adjust}
+            </span>
+            <button type="button" aria-label="Crește" onClick={() => onAdjust?.(0.5)} className="w-[44px] min-h-[40px] border border-solid border-[#5a4520] bg-transparent text-warning font-mono text-[16px] cursor-pointer">
+              +
+            </button>
+          </div>
+        )}
         <p className="m-0 font-mono text-[12px] text-warning-muted leading-[1.5]">{req.note}</p>
         <div className="flex gap-[10px] mt-[4px]">
           <button
