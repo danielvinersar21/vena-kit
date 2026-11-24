@@ -260,13 +260,8 @@ export function useLive(): { model: ScreenModel | null; actions: ScreenActions; 
     else if (asst.phase === 'processing') conversation = { kind: 'processing', text: asst.heard || '…', hint: asst.pipelineHint };
     else if (recent) {
       const chip = recent.targets.length && !recent.error ? `${recent.targets.map((x) => x.name).join(', ').toUpperCase()} · ACUM` : undefined;
-      // Cine a procesat cererea: comenzile locale din HA sau agentul (Haiku la Ionuț).
-      let via: string | undefined;
-      if (recent.processedLocally === true) via = 'local';
-      else if (recent.processedLocally === false) {
-        const agent = recent.agentId ? String(states.get(recent.agentId)?.attributes.friendly_name ?? recent.agentId) : 'agent';
-        via = /haiku/i.test(agent) ? 'Haiku' : agent;
-      }
+      // Cine a procesat cererea: comenzile locale din HA sau agentul din pipeline (numele dat de HA).
+      const via = recent.processedLocally === true ? 'local' : recent.processedLocally === false ? (recent.agentName ?? 'AI') : undefined;
       conversation = { kind: 'responding', you: recent.you || '—', answer: recent.answer || '(fără răspuns)', chip, via };
     } else conversation = { kind: 'greeting', title: greeting(now, opts.user_name), summary: summary(rooms, journal, events, t) };
 

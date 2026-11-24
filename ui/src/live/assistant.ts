@@ -19,8 +19,8 @@ export interface Exchange {
   error?: boolean;
   /** Din intent-end: true = comenzile locale din HA; false = agentul de conversație. Lipsă la HA vechi. */
   processedLocally?: boolean;
-  /** Agentul de conversație al pipeline-ului (entity_id), pentru eticheta „via …”. */
-  agentId?: string;
+  /** Numele agentului de conversație din pipeline, așa cum îl întoarce HA (conversation/agent/list). */
+  agentName?: string;
   at: number;
 }
 
@@ -56,6 +56,7 @@ export class AssistantEngine {
   state: AssistantState = { phase: 'idle', heard: '', last: null, micOpen: false, micActive: false, micMessage: null, pipelineHint: '' };
   private pipeline: Pipeline | undefined;
   private conversationId: string | null = null;
+  private agentName: string | undefined;
   private audio = new Audio();
   private runEnded = true;
   // voce
@@ -108,6 +109,9 @@ export class AssistantEngine {
       const res = await this.conn.send<{ pipelines: Pipeline[]; preferred_pipeline: string }>('assist_pipeline/pipeline/list');
       this.pipeline = res.pipelines.find((p) => p.id === res.preferred_pipeline) ?? res.pipelines[0];
       this.set({ pipelineHint: this.pipeline ? `pipeline ${this.pipeline.name}` : '' });
+      const agents = await this.conn.send<{ agents: { id: string; name?: string }[] }>('conversation/agent/list').catch(() => null);
+      const name = agents?.agents.find((a) => a.id === this.pipeline?.conversation_engine)?.name;
+      this.agentName = name?.trim() || undefined;
     } catch {
       this.pipeline = undefined;
     }
@@ -148,7 +152,7 @@ export class AssistantEngine {
                 targets,
                 error: resp.response_type === 'error',
                 processedLocally: typeof d.processed_locally === 'boolean' ? d.processed_locally : undefined,
-                agentId: this.pipeline?.conversation_engine,
+                agentName: this.agentName,
                 at: Date.now(),
               },
             });

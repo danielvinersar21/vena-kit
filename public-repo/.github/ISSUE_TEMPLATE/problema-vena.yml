@@ -1,0 +1,55 @@
+name: Problemă Vena
+description: Ceva nu merge cum trebuie în Vena.
+title: "[Problemă] "
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Mulțumim! Nu pune aici tokenuri, parole sau adrese ts.net. Șterge-le din log înainte să-l lipești.
+  - type: textarea
+    id: ce
+    attributes:
+      label: Ce s-a întâmplat
+      description: Ce ai văzut și ce te așteptai să se întâmple.
+    validations:
+      required: true
+  - type: textarea
+    id: pasi
+    attributes:
+      label: Pașii care au dus la eroare
+      placeholder: |
+        1. Am deschis Vena din bara laterală
+        2. Am ținut Space și am spus „…”
+        3. …
+    validations:
+      required: true
+  - type: input
+    id: versiune-vena
+    attributes:
+      label: Versiunea Vena
+      description: Settings → Apps → Vena (sub nume).
+      placeholder: 0.0.1
+    validations:
+      required: true
+  - type: input
+    id: versiune-ha
+    attributes:
+      label: Versiunea Home Assistant
+      description: Settings → About.
+      placeholder: Core 2026.9.3, OS 18.3
+    validations:
+      required: true
+  - type: textarea
+    id: log
+    attributes:
+      label: Log-ul add-on-ului
+      description: Settings → Apps → Vena → Log. Copiază ultimele linii din jurul erorii.
+      render: text
+  - type: input
+    id: browser
+    attributes:
+      label: Browserul folosit
+      placeholder: Chrome 142 pe macOS, prin https://…ts.net
+    validations:
+      required: true

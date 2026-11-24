@@ -5,7 +5,8 @@ set -e
 cd "$(dirname "$0")/.."
 DEST="${1:?director țintă lipsă}"
 mkdir -p "$DEST/vena"
-cp public-repo/repository.yaml public-repo/README.md "$DEST/"
+cp public-repo/repository.yaml public-repo/README.md INSTALL-FOR-CLAUDE.md "$DEST/"
+rm -rf "$DEST/.github" && cp -R public-repo/.github "$DEST/.github"
 for f in config.yaml DOCS.md README.md CHANGELOG.md icon.png logo.png; do
   [ -f "vena/$f" ] && cp "vena/$f" "$DEST/vena/"
 done

@@ -11,12 +11,12 @@ Vena e un add-on (app) de Home Assistant cu ingress: o interfață HUD peste HA.
 - Vena **nu are logică proprie de înțelegere**. Trimite textul și vocea în pipeline-ul Assist implicit din HA, iar HA decide: întâi comenzile locale, apoi Claude Haiku pentru restul. Configurația existentă la Ionuț rămâne neschimbată.
 - Haiku poate controla doar entitățile expuse în **Settings → Voice assistants → Expose**. Ce nu e expus (termostatul, AC-ul, poarta) nu se poate comanda vocal, nici din Vena. E intenționat, nu e o eroare.
 - Dacă Ionuț vrea ca Vena să înțeleagă la voce o entitate nouă, o expune acolo, cu OK-ul lui.
-- Sub răspuns, Vena afișează discret „via local” sau „via Haiku”, ca să se vadă cine a procesat cererea. Informația vine de la HA (`processed_locally` din evenimentul `intent-end`).
+- Sub răspuns, Vena afișează discret „via local” sau „via <numele agentului>” (numele agentului de conversație din pipeline, exact cum îl dă HA; „via AI” dacă HA nu dă un nume), ca să se vadă cine a procesat cererea. Informația vine de la HA (`processed_locally` din evenimentul `intent-end`).
 
 ## Pași
 
 1. **Adaugă repo-ul în HA.** Mergi la Settings → Apps (Add-ons) → Store → meniul ⋮ → Repositories și adaugă URL-ul repo-ului Vena: `https://github.com/danielvinersar21/vena-assistant`.
-   Dacă repo-ul e privat: copiază folderul `vena/` în `/addons/vena` (din File editor sau Samba), apoi apasă Check for updates în Store. Apare la „Local add-ons”.
+   Imaginea e gata construită (GHCR), deci instalarea doar o descarcă; nu se construiește nimic pe NAS.
 2. **Instalează Vena**, apoi pornește-o și activează „Show in sidebar”. Lasă „Start on boot” pornit.
 3. **Opțiuni** (fila Configuration), cu OK de la Ionuț pentru fiecare:
    - `assistant_name: Vena` (sau alt nume ales de el), `user_name: Ionuț`;
@@ -35,3 +35,26 @@ Vena e un add-on (app) de Home Assistant cu ingress: o interfață HUD peste HA.
 - „Nu se conectează”: verifică în log-ul add-on-ului că `homeassistant_api` e activ și că proxy-ul `ws://supervisor/core/websocket` răspunde.
 - „Nu apar camerele”: verifică entitățile `camera.*` de la Frigate și log-ul pentru `camera_proxy_stream`.
 - Probleme de resurse (VM-ul are 4 GB, cu Frigate pornit): Vena ar trebui să folosească sub 50 MB RAM. Dacă folosește mult mai mult, oprește add-on-ul și anunță.
+
+## Cum raportezi o problemă
+
+Orice problemă merge ca issue pe GitHub, cu template-ul „Problemă Vena”: https://github.com/danielvinersar21/vena-assistant/issues/new?template=problema-vena.yml
+
+Dacă ai `gh` și Ionuț îți dă OK, îl poți deschide direct, cu aceleași secțiuni ca template-ul:
+
+```sh
+gh issue create --repo danielvinersar21/vena-assistant --label bug --title "[Problemă] <pe scurt>" --body "### Ce s-a întâmplat
+...
+### Pașii care au dus la eroare
+1. ...
+### Versiunea Vena
+0.0.1
+### Versiunea Home Assistant
+...
+### Log-ul add-on-ului
+(Settings → Apps → Vena → Log, ultimele linii din jurul erorii)
+### Browserul folosit
+..."
+```
+
+Înainte să trimiți, scoate din log și din text tokenurile, parolele și adresa `ts.net`: repo-ul e public.
