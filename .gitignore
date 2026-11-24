@@ -4,3 +4,4 @@ dev/ha/config/*
 !dev/ha/config/configuration.yaml
 dev/whisper-data/
 .DS_Store
+vena/app/
