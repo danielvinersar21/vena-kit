@@ -18,7 +18,7 @@
     #chat-text { flex: 1; min-width: 240px; }
     #log { max-height: 320px; overflow: auto; white-space: pre-wrap; font-size: 12px; color: #9cc3d3; background: #071119; padding: 8px; }
     #mic.rec { background: #ff6b6b; color: #04070b; }
-    .muted { color: #7ea9bb; } .warn { color: #e8b25a; }
+    .muted { color: #7ea9bb; } .rec-ind { color: #ff6b6b; } .warn { color: #e8b25a; }
   </style>
 </head>
 <body>
@@ -43,6 +43,7 @@
     <div class="row">
       <button id="mic" type="button" aria-label="Ține apăsat ca să vorbești">🎙 ține apăsat (sau Space)</button>
       <span id="voice-state" class="muted">pregătit</span>
+      <span id="mic-open" class="rec-ind" role="status" hidden>● microfon deschis</span>
       <button id="wav" type="button" disabled>descarcă WAV-ul trimis</button>
     </div>
     <div id="mic-msg" class="warn"></div>

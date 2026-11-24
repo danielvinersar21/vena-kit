@@ -157,6 +157,10 @@ function runPipeline(startStage, input, hooks = {}) {
     },
   );
   promise.catch((e) => {
+    if (hooks.onRejected?.(e)) {
+      const { no_vad, ...rest } = input;
+      return runPipeline(startStage, rest, hooks);
+    }
     log('EROARE assist_pipeline/run', e);
     $('reply').textContent = `EROARE: ${e.message || e.code}`;
     hooks.onEvent?.({ type: 'run-end' });
@@ -174,10 +178,16 @@ $('chat').onsubmit = (e) => {
 
 // ---------- voce ----------
 const inIframe = window.self !== window.top;
-// Microfonul rămâne deschis între apăsări: deschiderea lui durează 0,5–1 s și
-// tăia începutul comenzii. Păstrăm și un pre-roll scurt, atașat la fiecare comandă.
-const PREROLL_CHUNKS = 3; // 3 × 100 ms
-const MIC_IDLE_CLOSE_MS = 120_000;
+// Politica microfonului (confidențialitate):
+// - se deschide DOAR la o apăsare; nu se redeschide singur;
+// - rămâne deschis cât tab-ul e vizibil și are focus, max 30 s după ultima eliberare
+//   (deschiderea durează 0,5–1 s și ar tăia începutul comenzii următoare);
+// - pre-roll: buffer circular LOCAL de ~500 ms, trimis doar la apăsare. Fără apăsare
+//   nu pleacă niciun byte din browser.
+const PREROLL_CHUNKS = 5; // 5 × 100 ms
+const MIC_IDLE_CLOSE_MS = 30_000;
+const MAX_HOLD_MS = 30_000; // siguranță: tasta blocată nu ține microfonul la nesfârșit
+let holdTimer;
 let audioCtx, workletReady, micStream, sourceNode, workletNode, micOpening, idleTimer;
 let recording = false;
 let handlerId = null;
@@ -186,6 +196,7 @@ let preroll = [];
 let endPending = false;
 let sentChunks = [];
 let gotAudio = false;
+let noVadSupported = true;
 let stopping = false; // stopVoice poate veni și de la VAD, și de la eliberarea butonului
 
 function voiceState(text) {
@@ -238,6 +249,7 @@ async function openMic() {
     workletNode.port.onmessage = (e) => onPcm(e.data);
     sourceNode = audioCtx.createMediaStreamSource(micStream);
     sourceNode.connect(workletNode);
+    micIndicator(true);
     log(`microfon deschis: ${audioCtx.sampleRate} Hz -> 16000 Hz PCM16 mono`);
   })();
   try {
@@ -247,17 +259,30 @@ async function openMic() {
   }
 }
 
-function closeMic() {
+function micIndicator(open) {
+  const el = $('mic-open');
+  el.hidden = !open;
+}
+
+function closeMic(force = false) {
   clearTimeout(idleTimer);
-  if (recording || !micStream) return;
+  if (!micStream) return;
+  if (recording) {
+    if (!force) return;
+    stopVoice();
+    return setTimeout(() => closeMic(true), 80);
+  }
   sourceNode?.disconnect();
   workletNode?.disconnect();
   micStream.getTracks().forEach((t) => t.stop());
   micStream = sourceNode = workletNode = null;
   preroll = [];
+  micIndicator(false);
   log('microfon închis');
 }
-document.addEventListener('visibilitychange', () => { if (document.hidden) closeMic(); });
+document.addEventListener('visibilitychange', () => { if (document.hidden) closeMic(true); });
+window.addEventListener('blur', () => closeMic(true));
+window.addEventListener('pagehide', () => closeMic(true));
 
 async function startVoice() {
   if (recording) return;
@@ -279,21 +304,36 @@ async function startVoice() {
     voiceState('pregătit');
     return micError(err);
   }
-  if (!$('mic').classList.contains('rec')) return; // eliberat în timpul deschiderii
+  if (!$('mic').classList.contains('rec') || !document.hasFocus()) { // eliberat sau focus pierdut
+    idleTimer = setTimeout(closeMic, MIC_IDLE_CLOSE_MS);
+    return;
+  }
   recording = true;
+  holdTimer = setTimeout(stopVoice, MAX_HOLD_MS);
   // Pre-roll: ultimele ~300 ms dinaintea apăsării (doar dacă microfonul era deja deschis).
   preBuffer = warm ? preroll.splice(0) : [];
   sentChunks = preBuffer.map((b) => b.slice(0));
   if (warm) gotAudio = true;
 
-  runPipeline('stt', { sample_rate: 16000 }, {
+  // Push-to-talk: sfârșitul îl dă eliberarea, nu VAD-ul din HA (o pauză nu mai taie comanda).
+  // `no_vad` e documentat doar pentru wake_word, dar codul HA îl aplică și la stt
+  // (verificat în 2026.9.3 și 2026.11.3). Dacă o versiune viitoare îl respinge, renunțăm la el.
+  runPipeline('stt', { sample_rate: 16000, ...(noVadSupported ? { no_vad: true } : {}) }, {
+    onRejected(err) {
+      if (noVadSupported && err?.code === 'invalid_format') {
+        noVadSupported = false;
+        log('HA nu acceptă no_vad; continui cu VAD-ul implicit');
+        return true;
+      }
+      return false;
+    },
     onEvent(ev) {
       if (ev.type === 'run-start') {
         handlerId = ev.data.runner_data.stt_binary_handler_id;
         for (const b of preBuffer.splice(0)) sendChunk(b);
         if (endPending) sendEnd();
       }
-      if (ev.type === 'stt-vad-end' || ev.type === 'stt-end') stopVoice();
+      if (ev.type === 'stt-end') stopVoice();
       if (ev.type === 'intent-start') voiceState('PROCESEAZĂ');
       if (ev.type === 'tts-start') voiceState('RĂSPUNDE');
       if (ev.type === 'run-end') voiceState('pregătit');
@@ -313,6 +353,7 @@ function stopVoice() {
   $('mic').setAttribute('aria-pressed', 'false');
   if (!recording || stopping) return;
   stopping = true;
+  clearTimeout(holdTimer);
   // Golește ultimul chunk parțial, apoi trimite marcajul de sfârșit.
   workletNode?.port.postMessage('flush');
   setTimeout(() => {
