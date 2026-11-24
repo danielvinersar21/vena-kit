@@ -121,8 +121,8 @@ Home Assistant Core
 
 - **Imagine pre-construită**, fără build pe NAS-ul lui Ionuț (2 nuclee, 4 GB, cu Frigate).
 - Repo-ul ăsta e **privat** (sursa). `.github/workflows/release.yaml` construiește imaginea multi-arch (amd64 + aarch64) cu acțiunile `home-assistant/builder` și o publică pe GHCR la fiecare tag `vX.Y.Z`. Tag-ul trebuie să fie egal cu `version` din `vena/config.yaml`.
-- Un **al doilea repo, public și mic** (`vena-addon`), conține doar `repository.yaml` și `vena/` cu `config.yaml` (cu `image:`), docs, icon, logo și traduceri. Se generează cu `scripts/export-public-repo.sh <clona>`.
-- Prima publicare pe GHCR e privată: pachetul trebuie făcut public din setările GitHub, altfel Supervisor-ul nu-l poate descărca.
+- Un **al doilea repo, public și mic** (`vena-assistant`), conține doar `repository.yaml` și `vena/` cu `config.yaml` (cu `image:`), docs, icon, logo și traduceri. Se generează cu `scripts/export-public-repo.sh <clona>`.
+- Prima publicare pe GHCR e privată: pachetul trebuie făcut public din setările GitHub, altfel Supervisor-ul nu-l poate descărca. **Decis: imaginea e publică** (codul din ea e vizibil; acceptat, proiectul nu e anunțat nicăieri).
 
 ## Ce am învățat în spike (noiembrie 2026)
 
@@ -138,3 +138,7 @@ Home Assistant Core
 
 - Microfonul în iframe-ul de ingress (așteptat: blocat → „Deschide Vena pe tot ecranul”) și dacă sesiunea de ingress ține în tab separat.
 - Rularea ca app adevărat sub Supervisor, cu imaginea de pe GHCR; consumul real de RAM pe amd64.
+
+## Layout pe ecrane mari (decis)
+
+Designul e pe 1440×900. Ecranul umple mereu toată înălțimea ferestrei, iar pe ecrane mai mari tot UI-ul se mărește proporțional (`zoom` = min(lățime/1440, înălțime/900), minim 1), în `ui/src/components/Screen.tsx`. La 1440×900 rezultatul e identic cu referința.

@@ -1,6 +1,6 @@
 #!/bin/sh
 # Generează conținutul repo-ului public (doar configurarea app-ului, fără sursă).
-# Folosire: scripts/export-public-repo.sh <director-țintă>   (ex.: clona lui vena-addon)
+# Folosire: scripts/export-public-repo.sh <director-țintă>   (ex.: clona lui vena-assistant)
 set -e
 cd "$(dirname "$0")/.."
 DEST="${1:?director țintă lipsă}"
