@@ -1,0 +1,19 @@
+name: vena-dev
+services:
+  homeassistant:
+    image: homeassistant/home-assistant:stable
+    container_name: vena-ha
+    volumes:
+      - ./config:/config
+    environment:
+      - TZ=Europe/Bucharest
+    ports:
+      - "127.0.0.1:8123:8123"
+    restart: unless-stopped
+  whisper:
+    image: rhasspy/wyoming-whisper:latest
+    container_name: vena-whisper
+    command: --model small --language ro
+    volumes:
+      - ../whisper-data:/data
+    restart: unless-stopped
