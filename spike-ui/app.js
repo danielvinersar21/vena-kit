@@ -174,24 +174,22 @@ $('chat').onsubmit = (e) => {
 
 // ---------- voce ----------
 const inIframe = window.self !== window.top;
-let audioCtx, workletReady, micStream, sourceNode, workletNode;
+// Microfonul rămâne deschis între apăsări: deschiderea lui durează 0,5–1 s și
+// tăia începutul comenzii. Păstrăm și un pre-roll scurt, atașat la fiecare comandă.
+const PREROLL_CHUNKS = 3; // 3 × 100 ms
+const MIC_IDLE_CLOSE_MS = 120_000;
+let audioCtx, workletReady, micStream, sourceNode, workletNode, micOpening, idleTimer;
 let recording = false;
 let handlerId = null;
 let preBuffer = [];
+let preroll = [];
 let endPending = false;
 let sentChunks = [];
+let gotAudio = false;
+let stopping = false; // stopVoice poate veni și de la VAD, și de la eliberarea butonului
 
 function voiceState(text) {
   $('voice-state').textContent = text;
-}
-
-async function ensureAudio() {
-  if (!audioCtx) {
-    audioCtx = new AudioContext();
-    workletReady = audioCtx.audioWorklet.addModule('./pcm-worklet.js');
-  }
-  await workletReady;
-  if (audioCtx.state === 'suspended') await audioCtx.resume();
 }
 
 function sendBinary(bytes) {
@@ -205,43 +203,89 @@ function sendChunk(int16buf) {
   sendBinary(msg);
 }
 
+function onPcm(buf) {
+  if (!recording) {
+    preroll.push(buf);
+    if (preroll.length > PREROLL_CHUNKS) preroll.shift();
+    return;
+  }
+  if (!gotAudio) {
+    gotAudio = true;
+    voiceState('VORBEȘTE');
+  }
+  sentChunks.push(buf.slice(0));
+  if (handlerId === null) preBuffer.push(buf);
+  else sendChunk(buf);
+}
+
+async function openMic() {
+  if (micStream) return;
+  if (micOpening) return micOpening;
+  micOpening = (async () => {
+    if (!window.isSecureContext || !navigator.mediaDevices?.getUserMedia) {
+      throw Object.assign(new Error('Microfonul cere HTTPS sau localhost.'), { name: 'InsecureContext' });
+    }
+    if (!audioCtx) {
+      audioCtx = new AudioContext();
+      workletReady = audioCtx.audioWorklet.addModule('./pcm-worklet.js');
+    }
+    await workletReady;
+    if (audioCtx.state === 'suspended') await audioCtx.resume();
+    micStream = await navigator.mediaDevices.getUserMedia({
+      audio: { channelCount: 1, echoCancellation: true, noiseSuppression: true, autoGainControl: true },
+    });
+    workletNode = new AudioWorkletNode(audioCtx, 'pcm-encoder');
+    workletNode.port.onmessage = (e) => onPcm(e.data);
+    sourceNode = audioCtx.createMediaStreamSource(micStream);
+    sourceNode.connect(workletNode);
+    log(`microfon deschis: ${audioCtx.sampleRate} Hz -> 16000 Hz PCM16 mono`);
+  })();
+  try {
+    await micOpening;
+  } finally {
+    micOpening = null;
+  }
+}
+
+function closeMic() {
+  clearTimeout(idleTimer);
+  if (recording || !micStream) return;
+  sourceNode?.disconnect();
+  workletNode?.disconnect();
+  micStream.getTracks().forEach((t) => t.stop());
+  micStream = sourceNode = workletNode = null;
+  preroll = [];
+  log('microfon închis');
+}
+document.addEventListener('visibilitychange', () => { if (document.hidden) closeMic(); });
+
 async function startVoice() {
   if (recording) return;
-  recording = true;
+  clearTimeout(idleTimer);
   $('mic').classList.add('rec');
   $('mic').setAttribute('aria-pressed', 'true');
   $('mic-msg').textContent = '';
   handlerId = null;
-  preBuffer = [];
   sentChunks = [];
   endPending = false;
+  gotAudio = false;
+  const warm = Boolean(micStream);
+  voiceState(warm ? 'VORBEȘTE' : 'deschid microfonul…');
   try {
-    if (!window.isSecureContext || !navigator.mediaDevices?.getUserMedia) {
-      throw Object.assign(new Error('Microfonul cere HTTPS sau localhost.'), { name: 'InsecureContext' });
-    }
-    await ensureAudio();
-    micStream = await navigator.mediaDevices.getUserMedia({
-      audio: { channelCount: 1, echoCancellation: true, noiseSuppression: true, autoGainControl: true },
-    });
+    await openMic();
   } catch (err) {
-    recording = false;
     $('mic').classList.remove('rec');
     $('mic').setAttribute('aria-pressed', 'false');
+    voiceState('pregătit');
     return micError(err);
   }
-  if (!recording) return stopTracks(); // utilizatorul a eliberat butonul în timpul cererii de permisiune
+  if (!$('mic').classList.contains('rec')) return; // eliberat în timpul deschiderii
+  recording = true;
+  // Pre-roll: ultimele ~300 ms dinaintea apăsării (doar dacă microfonul era deja deschis).
+  preBuffer = warm ? preroll.splice(0) : [];
+  sentChunks = preBuffer.map((b) => b.slice(0));
+  if (warm) gotAudio = true;
 
-  log(`microfon pornit: ${audioCtx.sampleRate} Hz -> 16000 Hz PCM16 mono`);
-  workletNode = new AudioWorkletNode(audioCtx, 'pcm-encoder');
-  workletNode.port.onmessage = (e) => {
-    sentChunks.push(e.data.slice(0));
-    if (handlerId === null) preBuffer.push(e.data);
-    else sendChunk(e.data);
-  };
-  sourceNode = audioCtx.createMediaStreamSource(micStream);
-  sourceNode.connect(workletNode);
-
-  voiceState('pornește…');
   runPipeline('stt', { sample_rate: 16000 }, {
     onEvent(ev) {
       if (ev.type === 'run-start') {
@@ -249,7 +293,6 @@ async function startVoice() {
         for (const b of preBuffer.splice(0)) sendChunk(b);
         if (endPending) sendEnd();
       }
-      if (ev.type === 'stt-start' || ev.type === 'stt-vad-start') voiceState('ASCULTĂ');
       if (ev.type === 'stt-vad-end' || ev.type === 'stt-end') stopVoice();
       if (ev.type === 'intent-start') voiceState('PROCESEAZĂ');
       if (ev.type === 'tts-start') voiceState('RĂSPUNDE');
@@ -259,11 +302,6 @@ async function startVoice() {
   });
 }
 
-function stopTracks() {
-  micStream?.getTracks().forEach((t) => t.stop());
-  micStream = null;
-}
-
 function sendEnd() {
   sendBinary(new Uint8Array([handlerId]));
   log(`sfârșit audio trimis (handler ${handlerId}), ${sentChunks.reduce((n, b) => n + b.byteLength, 0)} bytes PCM`);
@@ -271,23 +309,20 @@ function sendEnd() {
 }
 
 function stopVoice() {
-  if (!recording) return;
-  recording = false;
   $('mic').classList.remove('rec');
   $('mic').setAttribute('aria-pressed', 'false');
-  if (workletNode) {
-    // Golește ultimul chunk parțial înainte de marcajul de sfârșit.
-    workletNode.port.postMessage('flush');
-    const node = workletNode;
-    setTimeout(() => {
-      sourceNode?.disconnect();
-      node.disconnect();
-      stopTracks();
-      if (handlerId === null) endPending = true;
-      else sendEnd();
-    }, 50);
-    workletNode = null;
-  }
+  if (!recording || stopping) return;
+  stopping = true;
+  // Golește ultimul chunk parțial, apoi trimite marcajul de sfârșit.
+  workletNode?.port.postMessage('flush');
+  setTimeout(() => {
+    recording = false;
+    stopping = false;
+    if (handlerId === null) endPending = true;
+    else sendEnd();
+    if ($('voice-state').textContent === 'VORBEȘTE') voiceState('PROCESEAZĂ');
+    idleTimer = setTimeout(closeMic, MIC_IDLE_CLOSE_MS);
+  }, 50);
 }
 
 function micError(err) {
