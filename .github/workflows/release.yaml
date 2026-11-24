@@ -57,6 +57,10 @@ jobs:
           REF_TYPE: ${{ github.ref_type }}
           REF_NAME: ${{ github.ref_name }}
         run: |
+          # helpers/info întoarce valorile ca JSON (ex. version = "0.0.1", cu ghilimele): le scoatem.
+          unq() { local v="$1"; v="${v#\"}"; v="${v%\"}"; printf '%s' "$v"; }
+          IMAGE="$(unq "$IMAGE")"; VERSION="$(unq "$VERSION")"; NAME="$(unq "$NAME")"
+          DESCRIPTION="$(unq "$DESCRIPTION")"; URL="$(unq "$URL")"
           echo "image_name=${IMAGE##*/}" >> "$GITHUB_OUTPUT"
           echo "registry_prefix=${IMAGE%/*}" >> "$GITHUB_OUTPUT"
           echo "version=${VERSION}" >> "$GITHUB_OUTPUT"
