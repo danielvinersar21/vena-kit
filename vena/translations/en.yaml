@@ -1,0 +1,19 @@
+configuration:
+  assistant_name:
+    name: Assistant name
+    description: What the assistant is called in the interface.
+  user_name:
+    name: Your name
+    description: Used in the greeting. Empty = greeting without a name.
+  background_pattern:
+    name: Background pattern
+    description: hex, grid, dots or none.
+  background_strength:
+    name: Background strength
+    description: 0–100 (default 45).
+  protected_entities:
+    name: Protected entities
+    description: Require confirmation for every command. The climate, lock and cover domains are protected automatically.
+  read_only_entities:
+    name: Read-only entities
+    description: Shown, but Vena never sends commands to them (e.g. the gate).

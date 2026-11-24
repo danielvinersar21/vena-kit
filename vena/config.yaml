@@ -1,7 +1,10 @@
 name: Vena
 version: "0.0.1"
 slug: vena
-description: Interfață HUD pentru Home Assistant (spike)
+description: Interfață HUD pentru Home Assistant
+url: https://github.com/danielvinersar21/vena-addon
+# Imagine pre-construită multi-arch (amd64 + aarch64). Tag-ul = version.
+image: ghcr.io/danielvinersar21/vena
 arch:
   - amd64
   - aarch64

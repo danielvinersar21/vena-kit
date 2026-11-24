@@ -1,0 +1,19 @@
+configuration:
+  assistant_name:
+    name: Numele asistentului
+    description: Cum se numește asistentul în interfață.
+  user_name:
+    name: Numele tău
+    description: Folosit în salut. Gol = salut fără nume.
+  background_pattern:
+    name: Model de fundal
+    description: hex, grid, dots sau none.
+  background_strength:
+    name: Intensitatea fundalului
+    description: 0–100 (implicit 45).
+  protected_entities:
+    name: Entități protejate
+    description: Cer confirmare la fiecare comandă. Domeniile climate, lock și cover sunt protejate automat.
+  read_only_entities:
+    name: Entități doar citire
+    description: Se afișează, dar Vena nu le comandă niciodată (de ex. poarta).
