@@ -5,3 +5,5 @@ dev/ha/config/*
 dev/whisper-data/
 .DS_Store
 vena/app/
+visual/
+ui/dist/

@@ -4,12 +4,35 @@
   "private": true,
   "type": "module",
   "description": "Vena: interfață HUD pentru Home Assistant (spike)",
-  "engines": { "node": ">=20" },
+  "engines": {
+    "node": ">=20"
+  },
   "scripts": {
-    "dev": "node --watch server/index.js",
-    "start": "node server/index.js"
+    "dev": "node scripts/dev.mjs",
+    "dev:server": "node --watch server/index.js",
+    "dev:ui": "vite",
+    "build": "vite build",
+    "typecheck": "tsc -p tsconfig.json",
+    "start": "node server/index.js",
+    "visual": "node scripts/visual-compare.mjs"
   },
   "dependencies": {
     "ws": "^8.18.0"
+  },
+  "devDependencies": {
+    "@fontsource/chakra-petch": "^5.3.0",
+    "@fontsource/jetbrains-mono": "^5.3.0",
+    "@tailwindcss/vite": "^4.3.5",
+    "@types/node": "^24.19.2",
+    "@types/react": "^19.3.0",
+    "@types/react-dom": "^19.3.0",
+    "@vitejs/plugin-react": "^6.3.0",
+    "framer-motion": "^14.14.0",
+    "playwright-core": "^1.65.1",
+    "react": "^19.3.1",
+    "react-dom": "^19.3.1",
+    "tailwindcss": "^4.3.5",
+    "typescript": "^7.0.2",
+    "vite": "^8.3.8"
   }
 }
