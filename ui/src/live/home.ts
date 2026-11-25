@@ -42,6 +42,8 @@ export interface VenaOptions {
   background_strength: number;
   protected_entities: string[];
   read_only_entities: string[];
+  /** Camera afișată în „Camera curții”; gol = alegere automată. */
+  yard_camera?: string;
 }
 
 export interface Registry {
@@ -202,7 +204,9 @@ export function buildTiles(states: Map<string, HassState>, reg: Registry, opts: 
   return tiles.slice(0, 4);
 }
 
-export function pickCamera(states: Map<string, HassState>, reg: Registry): HassState | undefined {
+export function pickCamera(states: Map<string, HassState>, reg: Registry, opts?: VenaOptions): HassState | undefined {
+  const chosen = opts?.yard_camera ? states.get(opts.yard_camera) : undefined;
+  if (chosen && domainOf(chosen.entity_id) === 'camera') return chosen;
   const cams = [...states.values()].filter((s) => domainOf(s.entity_id) === 'camera' && visible(s.entity_id, reg));
   return cams.find((s) => /curte|yard|gate|poart/i.test(s.entity_id + nameOf(s))) ?? cams[0];
 }
@@ -220,15 +224,17 @@ export function buildCamera(cam: HassState | undefined, now: Date): Camera | nul
 
 const hhmm = (d: Date) => d.toLocaleTimeString('ro-RO', { hour: '2-digit', minute: '2-digit', hour12: false });
 
+const JOURNAL_DOMAINS = new Set([
+  'light', 'switch', 'fan', 'input_boolean', 'binary_sensor', 'climate', 'water_heater', 'humidifier',
+  'cover', 'lock', 'valve', 'alarm_control_panel', 'siren', 'media_player', 'vacuum', 'person',
+]);
+
 export function buildJournal(events: LogbookEvent[], states: Map<string, HassState>, opts: VenaOptions, now: number): JournalEntry[] {
-  // Evenimentele de stare ale senzorilor (valori, timestamp-uri) sunt zgomot pentru jurnal.
-  // Entitățile al căror „state” e un timestamp (conversation, button, scene…) la fel.
+  // Doar domeniile care contează pentru om. Valorile care se schimbă des (sensor,
+  // number, select…) și entitățile al căror „state” e un timestamp sunt zgomot.
   const ISO = /^\d{4}-\d{2}-\d{2}T/;
   const useful = (e: LogbookEvent) =>
-    !!e.message ||
-    (!!e.entity_id &&
-      !['sensor', 'camera', 'weather', 'sun', 'update', 'event', 'conversation', 'button', 'input_button', 'scene', 'stt', 'tts'].includes(domainOf(e.entity_id)) &&
-      !ISO.test(e.state ?? ''));
+    e.entity_id ? JOURNAL_DOMAINS.has(domainOf(e.entity_id)) && !ISO.test(e.state ?? '') : !!e.message;
   return events
     .filter(useful)
     .sort((a, b) => b.when - a.when)

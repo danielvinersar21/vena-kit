@@ -17,3 +17,6 @@ configuration:
   read_only_entities:
     name: Entități doar citire
     description: Se afișează, dar Vena nu le comandă niciodată (de ex. poarta).
+  yard_camera:
+    name: Camera curții
+    description: entity_id-ul camerei afișate (de ex. camera.poarta). Gol = alegere automată.

@@ -282,7 +282,7 @@ export function useLive(): { model: ScreenModel | null; actions: ScreenActions; 
         retryLabel: 'REÎNCEARCĂ ACUM',
       };
     }
-    const camera = buildCamera(pickCamera(states, reg_), now);
+    const camera = buildCamera(pickCamera(states, reg_, opts), now);
     return {
       location: (location || 'ACASĂ').toUpperCase(),
       connection: online ? 'online' : 'offline',

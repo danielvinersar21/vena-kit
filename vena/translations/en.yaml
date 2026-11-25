@@ -17,3 +17,6 @@ configuration:
   read_only_entities:
     name: Read-only entities
     description: Shown, but Vena never sends commands to them (e.g. the gate).
+  yard_camera:
+    name: Yard camera
+    description: Camera entity_id shown in the camera panel (e.g. camera.poarta). Empty = automatic choice.

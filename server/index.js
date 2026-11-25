@@ -48,6 +48,7 @@ const DEFAULT_OPTIONS = {
   background_strength: 45,
   protected_entities: [],
   read_only_entities: [],
+  yard_camera: '',
 };
 function readOptions() {
   try {
@@ -86,8 +87,9 @@ function haRequest(pathname, { method = 'GET', headers = {} } = {}) {
   return mod.request(url, { method, headers: { ...headers, Authorization: `Bearer ${TOKEN}` } });
 }
 
-function pipeFromHa(res, haPath, passHeaders = ['content-type', 'content-length', 'cache-control']) {
+function pipeFromHa(res, haPath, passHeaders = ['content-type', 'content-length', 'cache-control'], timeoutMs = 0) {
   const up = haRequest(haPath);
+  if (timeoutMs) up.setTimeout(timeoutMs, () => up.destroy(new Error('timeout')));
   up.on('response', (r) => {
     const headers = {};
     for (const h of passHeaders) if (r.headers[h]) headers[h] = r.headers[h];
@@ -154,7 +156,10 @@ const server = http.createServer((req, res) => {
   }
   let m;
   if ((m = pathname.match(/^\/camera\/(camera\.[a-z0-9_]+)$/))) {
-    return pipeFromHa(res, `/api/camera_proxy_stream/${m[1]}`, ['content-type']);
+    // O singură imagine (camera_proxy), nu transmisia MJPEG: proxy-ul Supervisor-ului
+    // citește tot răspunsul înainte să-l trimită, iar un flux care nu se termină
+    // rămâne agățat și îi umflă memoria. Browserul cere o imagine nouă după fiecare.
+    return pipeFromHa(res, `/api/camera_proxy/${m[1]}`, ['content-type', 'content-length'], 10_000);
   }
   if ((m = pathname.match(/^\/tts\/([A-Za-z0-9_\-]+\.[a-z0-9]+)$/))) {
     return pipeFromHa(res, `/api/tts_proxy/${m[1]}`);

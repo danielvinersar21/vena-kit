@@ -1,6 +1,6 @@
 {
   "name": "vena",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "private": true,
   "type": "module",
   "description": "Vena: interfață HUD pentru Home Assistant (spike)",

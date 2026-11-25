@@ -37,7 +37,7 @@ export interface Camera {
   time: string;
   rec: boolean;
   detection?: { label: string; left: string; top: string; width: string; height: string };
-  /** URL MJPEG relativ (./camera/<entity_id>); lipsă în mock. */
+  /** URL relativ al unei imagini (./camera/<entity_id>), reîmprospătată periodic; lipsă în mock. */
   streamUrl?: string;
   /** Fără semnal (offline): fără scan, detecție și REC; afișează „SEMNAL PIERDUT”. */
   signalLost?: boolean;

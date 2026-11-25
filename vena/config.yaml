@@ -1,5 +1,5 @@
 name: Vena
-version: "0.0.1"
+version: "0.0.2"
 slug: vena
 description: Interfață HUD pentru Home Assistant
 url: https://github.com/danielvinersar21/vena-assistant
@@ -30,3 +30,4 @@ schema:
     - str
   read_only_entities:
     - str
+  yard_camera: "str?"
