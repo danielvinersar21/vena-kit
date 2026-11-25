@@ -4,7 +4,15 @@ Pentru Claude-ul care lucrează cu Ionuț în „atelier”. Ionuț decide și a
 
 ## Ce este
 
-Vena e un add-on (app) de Home Assistant cu ingress: o interfață HUD peste HA. Se conectează prin proxy-ul intern al Supervisor-ului, deci **nu are nevoie de token și nu deschide porturi**. Folosește pipeline-ul Assist existent (Google STT → comenzi locale → Haiku → TTS românesc), fără să-l modifice.
+Vena e un add-on (app) de Home Assistant cu ingress: o interfață HUD peste HA. Folosește pipeline-ul Assist existent (Google STT → comenzi locale → Haiku → TTS românesc), fără să-l modifice.
+
+**Ce acces are.** Prin `homeassistant_api: true`, Supervisor-ul îi dă containerului un token (`SUPERVISOR_TOKEN`) cu acces la tot API-ul HA: lumini, camere, poartă, climă. Nu trebuie creat sau introdus niciun token de mână, dar accesul e complet. Protecțiile (confirmarea pentru entitățile protejate, refuzul oricărui apel pe entitățile read-only) sunt în codul Venei, nu în HA. Tokenul stă doar în memoria serverului din container și nu ajunge în browser. Vena nu deschide porturi: acceptă conexiuni doar de la gateway-ul de ingress (172.30.32.2).
+
+**Codul sursă** e public: https://github.com/danielvinersar21/vena-kit. Imaginea de pe GHCR e construită de workflow-ul `.github/workflows/release.yaml` din acel repo, la tag-ul `vX.Y.Z`; rularea din GitHub Actions arată commit-ul exact. Locuri de citit înainte de instalare:
+- `server/index.js`: filtrul de IP, proxy-ul WS către HA, camera și TTS;
+- `ui/src/live/useLive.ts` și `ui/src/live/home.ts`: apelurile de servicii, garda pentru read-only și confirmările;
+- `ui/src/live/assistant.ts`: microfonul (deschis doar la apăsare, închis la blur/ascundere și după 30 s);
+- `vena/config.yaml` și `vena/Dockerfile`: permisiunile add-on-ului și imaginea.
 
 ## Cum înțelege Vena comenzile
 
